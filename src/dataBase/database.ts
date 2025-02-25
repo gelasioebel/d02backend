@@ -1,16 +1,22 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
+import fs from 'fs';
 
-const dbPath = path.resolve(__dirname, 'db.db');
+// Ensure the db directory exists
+const dbDir = path.resolve(__dirname, '../../db');
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
 
-const db = new sqlite3.Database('db.db', (err) => {
+const dbPath = path.resolve(dbDir, 'plantas.db');
+
+const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('Erro ao conectar com o banco de dados', err);
   } else {
     console.log('Conexão com o banco de dados bem-sucedida!');
   }
 });
-
 
 export const initDB = () => {
   const sql = `
@@ -96,6 +102,7 @@ export const initDB = () => {
   });
 };
 
+// Initialize the database on module load
 initDB();
 
 export default db;
