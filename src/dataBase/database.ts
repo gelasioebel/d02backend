@@ -3,6 +3,9 @@ import sqlite3 from 'sqlite3';
 import path from 'path';
 import fs from 'fs';
 
+// Ativar modo verbose para ter mais logs do SQLite
+sqlite3.verbose();
+
 // Garante que o diretório do banco de dados existe
 const dbDir = path.resolve(__dirname, '../../db');
 if (!fs.existsSync(dbDir)) {
@@ -155,5 +158,8 @@ const seedTiposPlanta = () => {
     }
   });
 };
+
+// Inicializa o banco de dados assim que o módulo for importado
+initDB();
 
 export default db;

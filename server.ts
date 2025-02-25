@@ -1,8 +1,10 @@
 // Arquivo principal do servidor
-import db from './src/database/initDatabase'; // Este import já inicializa o banco de dados
 import express from "express";
 import cors from "cors";
 import router from "./src/routes/route";
+
+// Import do banco já inicializa graças ao initDB() no módulo
+import './src/database/database';
 
 const app = express();
 const port = process.env.PORT || 3000;
