@@ -1,27 +1,25 @@
+// Arquivo principal do servidor
+import db from './src/database/initDatabase'; // Este import já inicializa o banco de dados
 import express from "express";
 import cors from "cors";
-import routes from "./src/routes/routes";
-import { initDB } from "./src/database/database";
-
-// Make sure the database is initialized
-initDB();
+import router from "./src/routes/route";
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
+// Middlewares
 app.use(express.json());
 app.use(cors());
 
-// Routes
-app.use("/api", routes);
+// Rotas
+app.use("/api", router);
 
-// Simple route for testing
+// Rota simples para teste
 app.get("/", (req, res) => {
   res.json({ message: "API de Plantas - Servidor funcionando!" });
 });
 
-// Start server
+// Inicia o servidor
 app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);
 });

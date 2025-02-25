@@ -4,30 +4,29 @@
   "main": "dist/server.js",
   "scripts": {
     "start": "ts-node server.ts",
-    "dev": "ts-node-dev --respawn server.ts",
+    "dev": "ts-node --watch server.ts",
     "build": "tsc",
     "lint": "eslint . --ext .ts"
   },
   "author": "",
   "license": "ISC",
-  "description": "Backend API server",
+  "description": "Backend API server para loja de plantas",
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "sqlite3": "^5.1.7",
+    "ts-node": "^10.9.2",
     "yup": "^1.6.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.17.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.3",
     "@types/sqlite3": "^3.1.11",
-    "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.7.2",
-    "@eslint/js": "^9.17.0",
     "eslint": "^9.17.0",
     "globals": "^15.13.0",
+    "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.1"
   }
 }

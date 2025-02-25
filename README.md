@@ -14,7 +14,7 @@ npm install
 npm run start
 ```
 
-Para desenvolvimento:
+Para desenvolvimento (com auto-reload quando arquivos são alterados):
 ```bash
 npm run dev
 ```
@@ -22,7 +22,7 @@ npm run dev
 ## Estrutura do Projeto
 
 ```
-├── db/                # Diretório do banco de dados SQLite
+├── db/                # Diretório do banco de dados SQLite (criado automaticamente)
 ├── src/
 │   ├── controllers/   # Controladores da API
 │   ├── database/      # Configuração do banco de dados
@@ -69,4 +69,4 @@ O banco de dados SQLite inclui as seguintes tabelas:
 - **tipos_planta** - Categorias de plantas
 - **plantas** - Detalhes das plantas
 
-A API inicializa automaticamente o banco de dados com as tabelas necessárias na primeira execução.
+A API inicializa automaticamente o banco de dados com as tabelas necessárias na primeira execução e popula alguns tipos de plantas para começar.
