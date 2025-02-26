@@ -1,9 +1,7 @@
 name: Deploy to EC2
-
 on:
   push:
     branches: [ master ]
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -30,6 +28,10 @@ jobs:
           chmod 600 ~/.ssh/deploy.key
           ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
 
+      - name: Check EC2 Connection
+        run: |
+          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'echo "Connection successful!"'
+
       - name: Deploy to EC2
         run: |
           # Stop any running application
@@ -40,15 +42,32 @@ jobs:
           
           # Copy files
           rsync -avz --delete -e "ssh -i ~/.ssh/deploy.key" ./* ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/home/${{ secrets.USERNAME }}/app/
+          rsync -avz --delete -e "ssh -i ~/.ssh/deploy.key" ./.* ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/home/${{ secrets.USERNAME }}/app/ 2>/dev/null || true
           
-          # Create database directory with proper permissions
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'mkdir -p /home/${{ secrets.USERNAME }}/app/db && chmod 777 /home/${{ secrets.USERNAME }}/app/db'
+          # Make reset.sh executable and run it
+          echo "Running reset script..."
+          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && chmod +x ./reset.sh && ./reset.sh'
           
-          # Install and start
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && npm install && NODE_ENV=production pm2 start npm --name "plants-api" -- start'
+          # Wait for reset script to complete (60 seconds)
+          echo "Waiting for reset script to complete..."
+          sleep 60
+          
+          # Start the application with PM2
+          echo "Starting application with PM2..."
+          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && NODE_ENV=production pm2 start npm --name "plants-api" -- start'
 
       - name: Verify Deployment
         run: |
           echo "Waiting for application to start..."
           sleep 10
           ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'pm2 status'
+          
+          # Check if the app is responding
+          echo "Checking if API is responding..."
+          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'curl -sSf http://localhost:3000/ || echo "Warning: API not responding on localhost"'
+
+      - name: Deployment Summary
+        run: |
+          echo "✅ Deployment to EC2 completed"
+          echo "🌐 API should be available at http://${{ secrets.HOST }}:3000/"
+          echo "🔍 To check logs: ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'pm2 logs plants-api'"
