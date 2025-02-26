@@ -45,7 +45,7 @@ npm run build || {
 }
 
 # Offer to populate database
-read -p "Do you want to populate the database with sample data? (y/N) " choice
+read -p "Do you want to populate the database with sample data? (Y/n) " choice
 if [[ $choice =~ ^[Yy]$ ]]; then
   if [ -f "src/database/initDatabase.ts" ]; then
     echo "Initializing database..."
