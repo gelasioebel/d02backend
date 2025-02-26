@@ -9,15 +9,9 @@
 Uma API RESTful para gerenciar uma loja de plantas, construída com Node.js, Express e TypeScript, utilizando SQLite como banco de dados.
 
 ## TLDR - Testes:
+[API Base](ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/)
+[API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas)
 
-| Endpoint | Status |
-|----------|--------|
-| [API Base](ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/base&style=flat-square&label=API%20Base&labelColor=555555) |
-| [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/plantas&style=flat-square&label=Plantas&labelColor=555555) |
-| [API de Tipos de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/tipos-planta) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/tipos&style=flat-square&label=Tipos&labelColor=555555) |
-
-> ✅ Verde indica que o endpoint está funcionando corretamente  
-> ❌ Vermelho indica que o endpoint está indisponível
 
 ## Características
 
@@ -149,31 +143,28 @@ Todos os endpoints começam com o prefixo `/api`
 ### Plantas
 
 #### Listar todas as plantas
-- **URL**: `/api/plantas`  [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/plantas&style=flat-square&label=Plantas&labelColor=555555)
+- **URL**: `/api/plantas`  [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas) 
 - **Método**: `GET`
 - **Resposta**: Array de plantas
 
 #### Buscar planta por ID
-- **URL**: `/api/plantas/:id`
+- **URL**: `/api/plantas/:id`   [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas/1)
 - **Método**: `GET`
 - **Resposta**: Detalhes da planta com o ID especificado
-
-#### Adicionar nova planta
-- **URL**: `/api/plantas` 
-- **Método**: `POST`
-- **Corpo**: Dados da planta em JSON
-- **Resposta**: Planta criada com ID
 
 ### Tipos de Plantas
 
 #### Listar todos os tipos de plantas
-- **URL**: `/api/tipos-planta`
+- **URL**: `/api/tipos-planta`   [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/tipos-planta)
 - **Método**: `GET`
 - **Resposta**: Array de tipos de plantas
 
-## Exemplos de Uso
+#### Adicionar nova planta
 
-### Exemplo de Requisição para Adicionar Planta
+- **URL**: `/api/plantas`   [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/planstas/4)
+- **Método**: `POST`
+- **Corpo**: Dados da planta em JSON
+- **Resposta**: Planta criada com ID
 
 ```bash
 curl -X POST http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas \
@@ -193,6 +184,12 @@ curl -X POST http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/pl
 
 ### Exemplo de Resposta
 
+#### Buscar planta por ID
+- **URL**: `/api/plantas/:id`
+>###### Exemplo: Buscar planta por ID 4
+- **Exemplo**: `/api/plantas/4`   [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas/1)
+- **Método**: `GET`
+- **Resposta**: Detalhes da planta com o ID especificado
 ```json
 {
   "id": 4,
@@ -213,4 +210,4 @@ curl -X POST http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/pl
 
 ## Licença
 
-Este projeto está licenciado sob a licença ISC - veja o arquivo LICENSE para detalhes.
+Este projeto está licenciado sob a licença MIT
