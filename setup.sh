@@ -1,87 +1,70 @@
 #!/bin/bash
-# Windows-compatible cleanup and setup script
+# Simple reset script for Plant API Backend project
+# Cleans the project, resets the database, and reinstalls dependencies
 
-# Function to print colored output (Windows-compatible)
-print_status() {
-  local message=$2
-  echo "$message"
-}
+echo "==== Plant API Backend Reset Script ===="
 
-# Function to handle errors gently
-handle_error() {
-  echo "Error occurred during execution. Continuing anyway..."
-}
-
-# Set up gentle error handling
-trap 'handle_error' ERR
-
-echo "==== Node.js Backend Cleanup and Setup Script ===="
-
-# Check for running server and stop it gracefully for Windows
-echo "Checking for running servers..."
-# Use tasklist and taskkill for Windows
-if tasklist 2>NUL | findstr /i "node.exe" >NUL; then
-  echo "Stopping running node processes..."
-  taskkill /F /IM node.exe >NUL 2>&1 || echo "No node processes found or couldn't stop them"
-  sleep 2
+# Stop any running server processes
+echo "Stopping any running server processes..."
+if command -v taskkill >/dev/null 2>&1; then
+  # Windows
+  taskkill /F /IM node.exe >/dev/null 2>&1 || echo "No Node.js processes found"
+else
+  # Unix/Linux/macOS
+  pkill -f "node.*server.ts" >/dev/null 2>&1 || echo "No server processes found"
 fi
 
-# Fix directory structure issues (with Windows-compatible checks)
-echo "Standardizing directory structure..."
-# Check if src/database exists
-if [ ! -d "src/database" ]; then
-  echo "Creating src/database directory..."
-  mkdir -p src/database
-fi
-
-# Check if src/dataBase exists and is different from src/database
-if [ -d "src/dataBase" ] && [ "$(realpath src/dataBase)" != "$(realpath src/database)" ]; then
-  echo "Copying files from src/dataBase to src/database..."
-  cp -r src/dataBase/* src/database/ 2>/dev/null || echo "Warning: Some files couldn't be copied (may already exist)"
-  echo "Removing src/dataBase directory..."
-  rm -rf src/dataBase
-elif [ -d "src/dataBase" ]; then
-  echo "Directories are the same in case-insensitive system. No action needed."
-fi
-
+# Clean project directories
 echo "Cleaning project..."
 rm -rf node_modules
 rm -f package-lock.json
 rm -rf dist
-echo "Cleared build artifacts"
 
-# Database cleanup option with confirmation
-read -p "Do you want to clear the database too? (y/N) " choice
-if [[ $choice =~ ^[Yy]$ ]]; then
-  echo "Clearing database files..."
-  mkdir -p db
-  rm -rf db/*.db
-  echo "Database cleared"
-fi
+# Clean database files (without asking)
+echo "Cleaning database files..."
+mkdir -p db
+rm -rf db/*.db
 
+# Clean npm cache
 echo "Cleaning npm cache..."
 npm cache clean --force
 
+# Fix directory structure
+echo "Ensuring correct directory structure..."
+mkdir -p src/database src/controllers src/models src/routes src/middlewares
+
+# Handle case sensitivity issues with database directory
+if [ -d "src/dataBase" ] && [ "$(realpath src/dataBase)" != "$(realpath src/database)" ]; then
+  echo "Fixing database directory case sensitivity..."
+  cp -r src/dataBase/* src/database/ 2>/dev/null
+  rm -rf src/dataBase
+fi
+
+# Install dependencies
 echo "Installing dependencies..."
 npm install
 
-echo "Building project..."
+# Build the project
+echo "Building the project..."
 npm run build || {
-  echo "Build failed. Showing TypeScript errors:"
-  npx tsc --noEmit
-  exit 1
+  echo "⚠️ Build failed. You may need to fix TypeScript errors."
+  echo "Use 'npm run dev' to see errors in real-time."
 }
 
-echo "Project cleaned and rebuilt successfully!"
-
-# Optional: populate the database if requested
+# Offer to populate database
 read -p "Do you want to populate the database with sample data? (y/N) " choice
 if [[ $choice =~ ^[Yy]$ ]]; then
-  echo "Populating database with sample data..."
-  npx ts-node src/database/populateDatabase.ts
+  if [ -f "src/database/populateDatabase.ts" ]; then
+    echo "Populating database..."
+    npx ts-node src/database/populateDatabase.ts
+  elif [ -f "src/database/initDatabase.ts" ]; then
+    echo "Initializing database..."
+    npx ts-node src/database/initDatabase.ts
+  else
+    echo "⚠️ No database initialization script found."
+  fi
 fi
 
-echo "You can now start the server with:"
-echo "  → npm run dev   (for development with auto-reload)"
-echo "  → npm start     (for production mode)"
-echo "✓ All tasks completed successfully!"
+echo "Reset completed! You can now start the server with:"
+echo "  npm run dev  (for development with auto-reload)"
+echo "  npm start    (for production mode)"
