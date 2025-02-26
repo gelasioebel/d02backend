@@ -8,6 +8,11 @@
 
 Uma API RESTful para gerenciar uma loja de plantas, construída com Node.js, Express e TypeScript, utilizando SQLite como banco de dados.
 
+## Testes:
+    "🌐 API should be available at http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/plantas"
+    "🌐 API should be available at http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/tipos-planta"
+    "🌐 API should be available at http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/plantas/1"
+
 ## Características
 
 - **API RESTful** completa para gerenciar catálogo de plantas e tipos de plantas

@@ -70,4 +70,7 @@ jobs:
         run: |
           echo "✅ Deployment to EC2 completed"
           echo "🌐 API should be available at http://${{ secrets.HOST }}:3000/"
+          echo "🌐 API should be available at http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/plantas"
+          echo "🌐 API should be available at http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/tipos-planta"
+          echo "🌐 API should be available at http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/plantas/1"
           echo "🔍 To check logs: ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'pm2 logs plants-api'"
