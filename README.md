@@ -12,9 +12,9 @@ Uma API RESTful para gerenciar uma loja de plantas, construída com Node.js, Exp
 
 | Endpoint | Status |
 |----------|--------|
-| [API Base](http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/base&style=flat-square&label=API%20Base&labelColor=555555) |
-| [API de Plantas](http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/plantas) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/plantas&style=flat-square&label=Plantas&labelColor=555555) |
-| [API de Tipos de Plantas](http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/tipos-planta) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/tipos&style=flat-square&label=Tipos&labelColor=555555) |
+| [API Base](ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/base&style=flat-square&label=API%20Base&labelColor=555555) |
+| [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/plantas&style=flat-square&label=Plantas&labelColor=555555) |
+| [API de Tipos de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/tipos-planta) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/tipos&style=flat-square&label=Tipos&labelColor=555555) |
 
 > ✅ Verde indica que o endpoint está funcionando corretamente  
 > ❌ Vermelho indica que o endpoint está indisponível
@@ -149,7 +149,7 @@ Todos os endpoints começam com o prefixo `/api`
 ### Plantas
 
 #### Listar todas as plantas
-- **URL**: `/api/plantas`  [API de Plantas](http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/plantas) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/plantas&style=flat-square&label=Plantas&labelColor=555555)
+- **URL**: `/api/plantas`  [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/plantas&style=flat-square&label=Plantas&labelColor=555555)
 - **Método**: `GET`
 - **Resposta**: Array de plantas
 
@@ -176,7 +176,7 @@ Todos os endpoints começam com o prefixo `/api`
 ### Exemplo de Requisição para Adicionar Planta
 
 ```bash
-curl -X POST http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/plantas \
+curl -X POST http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas \
   -H "Content-Type: application/json" \
   -d '{
     "nome": "Samambaia Americana",
