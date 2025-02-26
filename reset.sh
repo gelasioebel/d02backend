@@ -45,15 +45,10 @@ npm run build || {
 }
 
 # Offer to populate database
-read -p "Do you want to populate the database with sample data? (Y/n) " choice
-if [[ $choice =~ ^[Yy]$ ]]; then
-  if [ -f "src/database/initDatabase.ts" ]; then
-    echo "Initializing database..."
-    npx ts-node src/database/initDatabase.ts
-  else
-    echo "⚠️ No database initialization script found."
-  fi
-fi
+
+echo "Initializing database..."
+npx ts-node src/database/initDatabase.ts
+
 
 echo "Reset completed! You can now start the server with:"
 echo "  npm run dev  (for development with auto-reload)"
