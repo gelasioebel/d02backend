@@ -89,7 +89,7 @@ jobs:
           }
           EOF
 
-      - name: Create certificate setup script
+      - name: Create universal SSL setup script
         run: |
           cat > setup-ssl.sh << 'EOF'
           #!/bin/bash
@@ -99,21 +99,67 @@ jobs:
 
           # Stop server to free port 80 for certbot
           echo "Stopping server if running..."
-          pm2 stop plants-api || true
+          pm2 stop plants-api || echo "No plants-api process running"
 
-          # Install certbot if not already installed
-          if ! command -v certbot &> /dev/null; then
-            echo "Installing certbot..."
-            if [ -f /etc/redhat-release ]; then
-              # CentOS/RHEL/Amazon Linux
-              sudo amazon-linux-extras install epel -y
-              sudo yum install certbot -y
-            else
-              # Ubuntu/Debian
-              sudo apt-get update
-              sudo apt-get install certbot -y
-            fi
+          # Detect OS and install certbot accordingly
+          echo "Detecting OS type and installing certbot..."
+          if [ -f /etc/os-release ]; then
+              # Load OS information
+              . /etc/os-release
+              OS_NAME=$ID
+
+              case $OS_NAME in
+                  amzn)
+                      # Amazon Linux 2
+                      echo "Detected Amazon Linux 2"
+                      if command -v amazon-linux-extras >/dev/null 2>&1; then
+                          sudo amazon-linux-extras install epel -y
+                          sudo yum install certbot -y
+                      else
+                          # Amazon Linux 2023 or newer
+                          echo "Installing certbot via pip (Amazon Linux 2023 method)"
+                          sudo yum install -y python3-pip
+                          sudo pip3 install certbot
+                      fi
+                      ;;
+                  ubuntu|debian)
+                      # Ubuntu/Debian
+                      echo "Detected Ubuntu/Debian"
+                      sudo apt-get update
+                      sudo apt-get install -y certbot
+                      ;;
+                  centos|rhel|fedora)
+                      # CentOS/RHEL/Fedora
+                      echo "Detected CentOS/RHEL/Fedora"
+                      sudo yum install -y epel-release
+                      sudo yum install -y certbot
+                      ;;
+                  *)
+                      # Fallback to pip installation
+                      echo "Unknown OS: $OS_NAME, installing certbot via pip"
+                      sudo yum install -y python3-pip || sudo apt-get install -y python3-pip
+                      sudo pip3 install certbot
+                      ;;
+              esac
+          else
+              # If /etc/os-release doesn't exist, try a generic approach
+              echo "Could not detect OS, trying pip installation method"
+              sudo yum install -y python3-pip || sudo apt-get install -y python3-pip
+              sudo pip3 install certbot
           fi
+
+          # Verify certbot is installed
+          if ! command -v certbot >/dev/null 2>&1; then
+              echo "Failed to install certbot using standard methods, trying pip3 directly"
+              sudo pip3 install certbot
+          
+              if ! command -v certbot >/dev/null 2>&1; then
+                  echo "ERROR: Could not install certbot. Please install manually."
+                  exit 1
+              fi
+          fi
+
+          echo "Certbot installed successfully: $(certbot --version)"
 
           # Get the server domain name
           DOMAIN=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)
@@ -157,10 +203,10 @@ jobs:
           DOMAIN=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)
 
           # Stop the application
-          pm2 stop plants-api
+          pm2 stop plants-api || echo "No plants-api process running"
 
           # Renew the certificate
-          certbot renew --quiet
+          sudo certbot renew --quiet
 
           # Copy the renewed certificates
           sudo cp /etc/letsencrypt/live/$DOMAIN/privkey.pem ~/app/ssl/
@@ -171,7 +217,7 @@ jobs:
           chmod 600 ~/app/ssl/*.pem
 
           # Restart the application
-          pm2 restart plants-api
+          pm2 restart plants-api || pm2 start plants-api
 
           # Log the renewal
           echo "Certificate renewed on $(date)" >> ~/cert-renewal.log
@@ -189,7 +235,7 @@ jobs:
           EOF
           chmod +x setup-ssl.sh
 
-      - name: Create SSH key
+      - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh/
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy.key
@@ -215,13 +261,13 @@ jobs:
           # Make scripts executable
           ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && chmod +x ./reset.sh ./setup-ssl.sh'
           
-          # Run SSL setup script
+          # Run SSL setup script with detailed output
           echo "Setting up SSL certificates..."
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && ./setup-ssl.sh'
+          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && bash -x ./setup-ssl.sh'
           
           # Make reset.sh executable and run it
           echo "Running reset script..."
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && ./reset.sh'
+          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && chmod +x ./reset.sh && ./reset.sh'
           
           # Wait for reset script to complete (60 seconds)
           echo "Waiting for reset script to complete..."
