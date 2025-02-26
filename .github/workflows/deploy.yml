@@ -189,39 +189,37 @@ jobs:
           EOF
           chmod +x setup-ssl.sh
 
-      - name: Create SSH key
+      - name: Setup SSH for deployment
         run: |
           mkdir -p ~/.ssh/
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy.key
-          chmod 600 ~/.ssh/deploy.key
           ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
 
       - name: Check EC2 Connection
         run: |
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'echo "Connection successful!"'
+          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'echo "Connection successful!"'
 
       - name: Deploy to EC2
         run: |
           # Stop any running application
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'pm2 delete plants-api || true'
+          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'pm2 delete plants-api || true'
           
           # Create app directory if it doesn't exist
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'mkdir -p /home/${{ secrets.USERNAME }}/app/ssl'
+          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'mkdir -p /home/${{ secrets.USERNAME }}/app/ssl'
           
           # Copy files
-          rsync -avz --delete -e "ssh -i ~/.ssh/deploy.key" ./* ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/home/${{ secrets.USERNAME }}/app/
-          rsync -avz --delete -e "ssh -i ~/.ssh/deploy.key" ./.* ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/home/${{ secrets.USERNAME }}/app/ 2>/dev/null || true
+          rsync -avz --delete ./* ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/home/${{ secrets.USERNAME }}/app/
+          rsync -avz --delete ./.* ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/home/${{ secrets.USERNAME }}/app/ 2>/dev/null || true
           
           # Make scripts executable
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && chmod +x ./reset.sh ./setup-ssl.sh'
+          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && chmod +x ./reset.sh ./setup-ssl.sh'
           
           # Run SSL setup script
           echo "Setting up SSL certificates..."
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && ./setup-ssl.sh'
+          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && ./setup-ssl.sh'
           
           # Make reset.sh executable and run it
           echo "Running reset script..."
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && chmod +x ./reset.sh && ./reset.sh'
+          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && chmod +x ./reset.sh && ./reset.sh'
           
           # Wait for reset script to complete (60 seconds)
           echo "Waiting for reset script to complete..."
@@ -229,26 +227,26 @@ jobs:
           
           # Start the application with PM2
           echo "Starting application with PM2..."
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && NODE_ENV=production pm2 start npm --name "plants-api" -- start'
+          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && NODE_ENV=production pm2 start npm --name "plants-api" -- start'
 
       - name: Verify Deployment
         run: |
           echo "Waiting for application to start..."
           sleep 10
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'pm2 status'
+          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'pm2 status'
           
           # Check if the app is responding (HTTP)
           echo "Checking if API is responding (HTTP)..."
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'curl -sSf http://localhost:3000/ || echo "Warning: API not responding on localhost"'
+          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'curl -sSf http://localhost:3000/ || echo "Warning: API not responding on localhost"'
           
           # Check if the app is responding (HTTPS)
           echo "Checking if API is responding (HTTPS)..."
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'curl -sSf -k https://localhost:3443/ || echo "Warning: API not responding on HTTPS"'
+          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'curl -sSf -k https://localhost:3443/ || echo "Warning: API not responding on HTTPS"'
 
       - name: Get EC2 Public Domain
         id: ec2-domain
         run: |
-          EC2_DOMAIN=$(ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'curl -s http://169.254.169.254/latest/meta-data/public-hostname')
+          EC2_DOMAIN=$(ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'curl -s http://169.254.169.254/latest/meta-data/public-hostname')
           echo "domain=$EC2_DOMAIN" >> $GITHUB_OUTPUT
 
       - name: Deployment Summary
@@ -257,10 +255,10 @@ jobs:
           echo "🌐 HTTP API: http://${{ secrets.HOST }}:3000/"
           echo "🌐 HTTPS API: https://${{ secrets.HOST }}:3443/"
           echo "🌐 API endpoints:"
-          echo "   - http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/plantas"
-          echo "   - http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/tipos-planta"
-          echo "   - http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/plantas/1"
-          echo "   - https://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3443/api/plantas"
-          echo "   - https://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3443/api/tipos-planta"
-          echo "   - https://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3443/api/plantas/1"
+          echo "   - http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas"
+          echo "   - http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/tipos-planta"
+          echo "   - http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas/1"
+          echo "   - https://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3443/api/plantas"
+          echo "   - https://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3443/api/tipos-planta"
+          echo "   - https://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3443/api/plantas/1"
           echo "🔍 To check logs: ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'pm2 logs plants-api'"
