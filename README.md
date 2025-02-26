@@ -10,9 +10,14 @@ Uma API RESTful para gerenciar uma loja de plantas, construída com Node.js, Exp
 
 ## TLDR - Testes:
 
-- [API de Plantas](http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/plantas)
-- [API de Tipos de Plantas](http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/tipos-planta)
-- [API de Plantas (por ID) Example for ID 1](http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/plantas/1)
+| Endpoint | Status |
+|----------|--------|
+| [API Base](http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/base&style=flat-square&label=API%20Base&labelColor=555555) |
+| [API de Plantas](http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/plantas) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/plantas&style=flat-square&label=Plantas&labelColor=555555) |
+| [API de Tipos de Plantas](http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/tipos-planta) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/tipos&style=flat-square&label=Tipos&labelColor=555555) |
+
+> ✅ Verde indica que o endpoint está funcionando corretamente  
+> ❌ Vermelho indica que o endpoint está indisponível
 
 ## Características
 
@@ -144,7 +149,7 @@ Todos os endpoints começam com o prefixo `/api`
 ### Plantas
 
 #### Listar todas as plantas
-- **URL**: `/api/plantas`
+- **URL**: `/api/plantas`  [API de Plantas](http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/plantas) | ![API Status](https://img.shields.io/endpoint?url=https://yourstatusservice.com/api/status/plantas&style=flat-square&label=Plantas&labelColor=555555)
 - **Método**: `GET`
 - **Resposta**: Array de plantas
 
@@ -154,7 +159,7 @@ Todos os endpoints começam com o prefixo `/api`
 - **Resposta**: Detalhes da planta com o ID especificado
 
 #### Adicionar nova planta
-- **URL**: `/api/plantas`
+- **URL**: `/api/plantas` 
 - **Método**: `POST`
 - **Corpo**: Dados da planta em JSON
 - **Resposta**: Planta criada com ID
@@ -171,7 +176,7 @@ Todos os endpoints começam com o prefixo `/api`
 ### Exemplo de Requisição para Adicionar Planta
 
 ```bash
-curl -X POST http://localhost:3000/api/plantas \
+curl -X POST http://ec2-3-142-133-230.us-east-2.compute.amazonaws.com:3000/api/plantas \
   -H "Content-Type: application/json" \
   -d '{
     "nome": "Samambaia Americana",
@@ -181,7 +186,7 @@ curl -X POST http://localhost:3000/api/plantas \
     "esta_em_promocao": false,
     "caracteristicas": "Folhas rendadas; Gosta de umidade; Crescimento médio",
     "descricao": "A Samambaia Americana é uma planta elegante com folhas delicadas em formato de renda...",
-    "url_imagem": "https://exemplo.com/samambaia.jpg",
+    "url_imagem": "https://upload.wikimedia.org/wikipedia/commons/d/d4/Polypodiopsida_Fern_02.jpg",
     "tipo_planta_id": 1
   }'
 ```
@@ -199,36 +204,12 @@ curl -X POST http://localhost:3000/api/plantas \
   "porcentagem_desconto": null,
   "caracteristicas": "Folhas rendadas; Gosta de umidade; Crescimento médio",
   "descricao": "A Samambaia Americana é uma planta elegante com folhas delicadas em formato de renda...",
-  "url_imagem": "https://exemplo.com/samambaia.jpg",
+  "url_imagem": "https://upload.wikimedia.org/wikipedia/commons/d/d4/Polypodiopsida_Fern_02.jpg",
   "tipo_planta_id": 1,
   "created_at": "2025-02-25T12:34:56.789Z",
   "updated_at": "2025-02-25T12:34:56.789Z"
 }
 ```
-
-## Solução de Problemas
-
-### Erro de Porta em Uso
-```
-Error: listen EADDRINUSE: address already in use :::3000
-```
-
-**Solução**: A porta 3000 já está em uso. Altere a porta definindo a variável de ambiente PORT:
-```bash
-PORT=3001 npm run dev
-```
-
-### Erro de Acesso ao Banco de Dados
-```
-Error: SQLITE_CANTOPEN: unable to open database file
-```
-
-**Solução**: Verifique se a pasta `db` existe e se o servidor tem permissão para escrever nela:
-```bash
-mkdir -p db
-chmod 755 db
-```
-
 
 ## Licença
 
