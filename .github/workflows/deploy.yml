@@ -189,7 +189,7 @@ jobs:
           EOF
           chmod +x setup-ssl.sh
 
-      - name: Setup SSH key
+      - name: Create SSH key
         run: |
           mkdir -p ~/.ssh/
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy.key
