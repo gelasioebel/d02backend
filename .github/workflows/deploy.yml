@@ -21,249 +21,26 @@ jobs:
       - name: Run tests
         run: npm test || true
 
-      - name: Update server.ts for HTTPS support
-        run: |
-          cat > server.ts << 'EOF'
-          // Arquivo principal do servidor
-          import express from "express";
-          import cors from "cors";
-          import router from "./src/routes/route";
-          import https from "https";
-          import http from "http";
-          import fs from "fs";
-          import path from "path";
-
-          // Import do banco já inicializa graças ao initDB() no módulo
-          import './src/database/database';
-
-          const app = express();
-          const port = process.env.PORT || 3000;
-          const httpsPort = process.env.HTTPS_PORT || 3443;
-
-          // Middlewares
-          app.use(express.json());
-          app.use(cors());
-
-          // Rotas
-          app.use("/api", router);
-
-          // Rota simples para teste
-          app.get("/", (req, res) => {
-            res.json({ message: "API de Plantas - Servidor funcionando!" });
-          });
-
-          // Inicia o servidor HTTP
-          http.createServer(app).listen(port, () => {
-            console.log(`Servidor HTTP rodando na porta ${port}`);
-          });
-
-          // Verifica se os arquivos SSL existem
-          const sslPath = path.join(__dirname, 'ssl');
-          const privateKeyPath = path.join(sslPath, 'privkey.pem');
-          const certificatePath = path.join(sslPath, 'cert.pem');
-          const chainPath = path.join(sslPath, 'chain.pem');
-
-          // Função para verificar se o diretório SSL existe e os arquivos necessários
-          const sslFilesExist = () => {
-            if (!fs.existsSync(sslPath)) return false;
-            return fs.existsSync(privateKeyPath) && 
-                   fs.existsSync(certificatePath) && 
-                   fs.existsSync(chainPath);
-          };
-
-          // Inicia o servidor HTTPS se os arquivos SSL existirem
-          if (sslFilesExist()) {
-            const credentials = {
-              key: fs.readFileSync(privateKeyPath, 'utf8'),
-              cert: fs.readFileSync(certificatePath, 'utf8'),
-              ca: fs.readFileSync(chainPath, 'utf8')
-            };
-
-            https.createServer(credentials, app).listen(httpsPort, () => {
-              console.log(`Servidor HTTPS rodando na porta ${httpsPort}`);
-            });
-          } else {
-            console.log('Arquivos SSL não encontrados. Servidor HTTPS não iniciado.');
-            console.log('Para habilitar HTTPS, coloque os arquivos SSL no diretório:');
-            console.log(sslPath);
-          }
-          EOF
-
-      - name: Create universal SSL setup script
-        run: |
-          cat > setup-ssl.sh << 'EOF'
-          #!/bin/bash
-          set -e
-
-          echo "==== SSL Certificate Setup Script ===="
-
-          # Stop server to free port 80 for certbot
-          echo "Stopping server if running..."
-          pm2 stop plants-api || echo "No plants-api process running"
-
-          # Detect OS and install certbot accordingly
-          echo "Detecting OS type and installing certbot..."
-          if [ -f /etc/os-release ]; then
-              # Load OS information
-              . /etc/os-release
-              OS_NAME=$ID
-
-              case $OS_NAME in
-                  amzn)
-                      # Amazon Linux 2
-                      echo "Detected Amazon Linux 2"
-                      if command -v amazon-linux-extras >/dev/null 2>&1; then
-                          sudo amazon-linux-extras install epel -y
-                          sudo yum install certbot -y
-                      else
-                          # Amazon Linux 2023 or newer
-                          echo "Installing certbot via pip (Amazon Linux 2023 method)"
-                          sudo yum install -y python3-pip
-                          sudo pip3 install certbot
-                      fi
-                      ;;
-                  ubuntu|debian)
-                      # Ubuntu/Debian
-                      echo "Detected Ubuntu/Debian"
-                      sudo apt-get update
-                      sudo apt-get install -y certbot
-                      ;;
-                  centos|rhel|fedora)
-                      # CentOS/RHEL/Fedora
-                      echo "Detected CentOS/RHEL/Fedora"
-                      sudo yum install -y epel-release
-                      sudo yum install -y certbot
-                      ;;
-                  *)
-                      # Fallback to pip installation
-                      echo "Unknown OS: $OS_NAME, installing certbot via pip"
-                      sudo yum install -y python3-pip || sudo apt-get install -y python3-pip
-                      sudo pip3 install certbot
-                      ;;
-              esac
-          else
-              # If /etc/os-release doesn't exist, try a generic approach
-              echo "Could not detect OS, trying pip installation method"
-              sudo yum install -y python3-pip || sudo apt-get install -y python3-pip
-              sudo pip3 install certbot
-          fi
-
-          # Verify certbot is installed
-          if ! command -v certbot >/dev/null 2>&1; then
-              echo "Failed to install certbot using standard methods, trying pip3 directly"
-              sudo pip3 install certbot
-          
-              if ! command -v certbot >/dev/null 2>&1; then
-                  echo "ERROR: Could not install certbot. Please install manually."
-                  exit 1
-              fi
-          fi
-
-          echo "Certbot installed successfully: $(certbot --version)"
-
-          # Get the server domain name
-          DOMAIN=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)
-          echo "Server domain: $DOMAIN"
-
-          # Create SSL directory if it doesn't exist
-          mkdir -p ~/app/ssl
-
-          # Check if we have valid certificates
-          if [ -d "/etc/letsencrypt/live/$DOMAIN" ]; then
-            echo "Found existing certificates for $DOMAIN"
-          else
-            echo "Requesting new certificates from Let's Encrypt..."
-            sudo certbot certonly --standalone \
-              --preferred-challenges http \
-              -d $DOMAIN \
-              --agree-tos \
-              --email admin@example.com \
-              --non-interactive
-            echo "Certificates obtained successfully!"
-          fi
-
-          # Copy certificates to app directory
-          echo "Copying certificates to app directory..."
-          sudo cp /etc/letsencrypt/live/$DOMAIN/privkey.pem ~/app/ssl/
-          sudo cp /etc/letsencrypt/live/$DOMAIN/cert.pem ~/app/ssl/
-          sudo cp /etc/letsencrypt/live/$DOMAIN/chain.pem ~/app/ssl/
-
-          # Fix permissions
-          sudo chown -R $(whoami):$(whoami) ~/app/ssl
-          chmod 600 ~/app/ssl/*.pem
-
-          # Verify files
-          echo "Verifying SSL files..."
-          ls -la ~/app/ssl/
-
-          # Create certificate renewal script
-          echo "Creating certificate renewal script..."
-          cat > ~/renew-cert.sh << 'RENEWAL'
-          #!/bin/bash
-          DOMAIN=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)
-
-          # Stop the application
-          pm2 stop plants-api || echo "No plants-api process running"
-
-          # Renew the certificate
-          sudo certbot renew --quiet
-
-          # Copy the renewed certificates
-          sudo cp /etc/letsencrypt/live/$DOMAIN/privkey.pem ~/app/ssl/
-          sudo cp /etc/letsencrypt/live/$DOMAIN/cert.pem ~/app/ssl/
-          sudo cp /etc/letsencrypt/live/$DOMAIN/chain.pem ~/app/ssl/
-
-          # Fix permissions
-          chmod 600 ~/app/ssl/*.pem
-
-          # Restart the application
-          pm2 restart plants-api || pm2 start plants-api
-
-          # Log the renewal
-          echo "Certificate renewed on $(date)" >> ~/cert-renewal.log
-          RENEWAL
-
-          chmod +x ~/renew-cert.sh
-
-          # Set up cron job for automatic renewal if not already set
-          if ! crontab -l 2>/dev/null | grep -q "renew-cert.sh"; then
-            echo "Setting up automatic certificate renewal..."
-            (crontab -l 2>/dev/null; echo "0 0,12 * * * ~/renew-cert.sh") | crontab -
-          fi
-
-          echo "SSL setup completed successfully!"
-          EOF
-          chmod +x setup-ssl.sh
-
-      - name: Setup SSH key
+      - name: Create SSH key
         run: |
           mkdir -p ~/.ssh/
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy.key
           chmod 600 ~/.ssh/deploy.key
           ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
-
       - name: Check EC2 Connection
         run: |
           ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'echo "Connection successful!"'
-
       - name: Deploy to EC2
         run: |
           # Stop any running application
           ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'pm2 delete plants-api || true'
           
           # Create app directory if it doesn't exist
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'mkdir -p /home/${{ secrets.USERNAME }}/app/ssl'
+          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'mkdir -p /home/${{ secrets.USERNAME }}/app'
           
           # Copy files
           rsync -avz --delete -e "ssh -i ~/.ssh/deploy.key" ./* ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/home/${{ secrets.USERNAME }}/app/
           rsync -avz --delete -e "ssh -i ~/.ssh/deploy.key" ./.* ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/home/${{ secrets.USERNAME }}/app/ 2>/dev/null || true
-          
-          # Make scripts executable
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && chmod +x ./reset.sh ./setup-ssl.sh'
-          
-          # Run SSL setup script with detailed output
-          echo "Setting up SSL certificates..."
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && bash -x ./setup-ssl.sh'
           
           # Make reset.sh executable and run it
           echo "Running reset script..."
@@ -276,37 +53,22 @@ jobs:
           # Start the application with PM2
           echo "Starting application with PM2..."
           ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'cd /home/${{ secrets.USERNAME }}/app && NODE_ENV=production pm2 start npm --name "plants-api" -- start'
-
       - name: Verify Deployment
         run: |
           echo "Waiting for application to start..."
           sleep 10
           ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'pm2 status'
           
-          # Check if the app is responding (HTTP)
-          echo "Checking if API is responding (HTTP)..."
+          # Check if the app is responding
+          echo "Checking if API is responding..."
           ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'curl -sSf http://localhost:3000/ || echo "Warning: API not responding on localhost"'
-          
-          # Check if the app is responding (HTTPS)
-          echo "Checking if API is responding (HTTPS)..."
-          ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'curl -sSf -k https://localhost:3443/ || echo "Warning: API not responding on HTTPS"'
-
-      - name: Get EC2 Public Domain
-        id: ec2-domain
-        run: |
-          EC2_DOMAIN=$(ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'curl -s http://169.254.169.254/latest/meta-data/public-hostname')
-          echo "domain=$EC2_DOMAIN" >> $GITHUB_OUTPUT
-
       - name: Deployment Summary
         run: |
           echo "✅ Deployment to EC2 completed"
-          echo "🌐 HTTP API: http://${{ secrets.HOST }}:3000/"
-          echo "🌐 HTTPS API: https://${{ secrets.HOST }}:3443/"
-          echo "🌐 API endpoints:"
-          echo "   - http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas"
-          echo "   - http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/tipos-planta"
-          echo "   - http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas/1"
-          echo "   - https://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3443/api/plantas"
-          echo "   - https://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3443/api/tipos-planta"
-          echo "   - https://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3443/api/plantas/1"
+          echo "🌐 API should be available at http://${{ secrets.HOST }}:3000/"
+          echo "🌐 API should be available at http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas"
+          echo "🌐 API should be available at http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/tipos-planta"
+          echo "🌐 API should be available at http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas/1"
+          echo "🔍 To check logs: ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'pm2 logs plants-api'"
+          
           echo "🔍 To check logs: ssh -i ~/.ssh/deploy.key ${{ secrets.USERNAME }}@${{ secrets.HOST }} 'pm2 logs plants-api'"
