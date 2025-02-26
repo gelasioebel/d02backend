@@ -9,7 +9,7 @@
 Uma API RESTful para gerenciar uma loja de plantas, construída com Node.js, Express e TypeScript, utilizando SQLite como banco de dados.
 
 ## TLDR - Testes:
-[API Base](ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/)
+[API Base](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/)
 [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas)
 
 
@@ -34,7 +34,7 @@ Uma API RESTful para gerenciar uma loja de plantas, construída com Node.js, Exp
 
 ```bash
 # Clonar o repositório
-git clone https://github.com/seu-usuario/api-plantas-backend.git
+git clone https://github.com/gelasioebel/api-plantas-backend.git
 
 # Entrar no diretório do projeto
 cd api-plantas-backend
@@ -142,26 +142,26 @@ Todos os endpoints começam com o prefixo `/api`
 
 ### Plantas
 
-#### Listar todas as plantas
-- **URL**: `/api/plantas`  [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas) 
+>#### [API de Plantas - Listar todas as plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas)
+- **URL**: `/api/plantas`   
 - **Método**: `GET`
 - **Resposta**: Array de plantas
 
-#### Buscar planta por ID
-- **URL**: `/api/plantas/:id`   [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas/1)
+>#### [API de Plantas - Buscar planta por ID](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas/1)
+- **URL**: `/api/plantas/:id`   
 - **Método**: `GET`
 - **Resposta**: Detalhes da planta com o ID especificado
 
 ### Tipos de Plantas
 
-#### Listar todos os tipos de plantas
-- **URL**: `/api/tipos-planta`   [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/tipos-planta)
+>#### [API de Plantas - Listar todos os tipos de plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/tipos-planta)
+- **URL**: `/api/tipos-planta`
 - **Método**: `GET`
 - **Resposta**: Array de tipos de plantas
 
-#### Adicionar nova planta
+>### Adicionar nova planta
 
-- **URL**: `/api/plantas`   [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/planstas/4)
+- **URL**: `/api/plantas`   [API de Plantas ](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/planstas/4)
 - **Método**: `POST`
 - **Corpo**: Dados da planta em JSON
 - **Resposta**: Planta criada com ID
@@ -186,8 +186,8 @@ curl -X POST http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/pl
 
 #### Buscar planta por ID
 - **URL**: `/api/plantas/:id`
->###### Exemplo: Buscar planta por ID 4
-- **Exemplo**: `/api/plantas/4`   [API de Plantas](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas/1)
+>##### Exemplo: [API de Plantas - Buscar planta por ID 4](http://ec2-13-59-190-75.us-east-2.compute.amazonaws.com:3000/api/plantas/4)
+- **Exemplo**: `/api/plantas/4` 
 - **Método**: `GET`
 - **Resposta**: Detalhes da planta com o ID especificado
 ```json
