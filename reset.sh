@@ -33,13 +33,6 @@ npm cache clean --force
 echo "Ensuring correct directory structure..."
 mkdir -p src/database src/controllers src/models src/routes src/middlewares
 
-# Handle case sensitivity issues with database directory
-if [ -d "src/dataBase" ] && [ "$(realpath src/dataBase)" != "$(realpath src/database)" ]; then
-  echo "Fixing database directory case sensitivity..."
-  cp -r src/dataBase/* src/database/ 2>/dev/null
-  rm -rf src/dataBase
-fi
-
 # Install dependencies
 echo "Installing dependencies..."
 npm install
@@ -54,10 +47,7 @@ npm run build || {
 # Offer to populate database
 read -p "Do you want to populate the database with sample data? (y/N) " choice
 if [[ $choice =~ ^[Yy]$ ]]; then
-  if [ -f "src/database/populateDatabase.ts" ]; then
-    echo "Populating database..."
-    npx ts-node src/database/populateDatabase.ts
-  elif [ -f "src/database/initDatabase.ts" ]; then
+  if [ -f "src/database/initDatabase.ts" ]; then
     echo "Initializing database..."
     npx ts-node src/database/initDatabase.ts
   else

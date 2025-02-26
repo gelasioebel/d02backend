@@ -318,12 +318,12 @@ export const seedPlantas = (defaultImagePath: string): Promise<void> => {
                         }
 
                         const stmt = db.prepare(`
-                            INSERT INTO plantas (
-                                nome, subtitulo, etiquetas, preco,
-                                esta_em_promocao, porcentagem_desconto,
-                                caracteristicas, descricao, url_imagem, tipo_planta_id
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        `);
+              INSERT INTO plantas (
+                nome, subtitulo, etiquetas, preco,
+                esta_em_promocao, porcentagem_desconto,
+                caracteristicas, descricao, url_imagem, tipo_planta_id
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
 
                         let completed = 0;
                         let errors = 0;
