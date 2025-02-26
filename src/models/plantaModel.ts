@@ -1,9 +1,24 @@
-// Modelo para operações no banco de dados relacionadas a plantas
+// src/models/plantaModel.ts
 import db from '../database/database';
 
-// Interface que define os campos necessários para criar uma planta
-interface PlantaInput {
+// Interfaces para os tipos de dados
+export interface Planta {
+  id: number;
+  nome: string;
+  subtitulo: string;
+  etiquetas: string;
+  preco: number;
+  esta_em_promocao: boolean;
+  porcentagem_desconto?: number;
+  caracteristicas: string;
+  descricao: string;
+  url_imagem: string;
   tipo_planta_id: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlantaInput {
   nome: string;
   subtitulo: string;
   etiquetas: string;
@@ -13,18 +28,64 @@ interface PlantaInput {
   caracteristicas: string;
   descricao: string;
   url_imagem: string;
+  tipo_planta_id: number;
+}
+
+export interface TipoPlanta {
+  id: number;
+  nome: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface DbError extends Error {
+  code?: string;
+  errno?: number;
+  message: string;
 }
 
 export class PlantaModel {
   /**
-   * Cria uma nova planta no banco de dados
-   * @param planta Dados da planta a ser criada
-   * @returns Promise com a planta criada incluindo seu ID
+   * Busca uma planta pelo ID
+   * @param id ID da planta a ser buscada
+   * @returns Promise com a planta encontrada ou undefined se não encontrada
    */
-  static criarPlanta(planta: PlantaInput): Promise<PlantaInput & { id: number }> {
+  static buscarPlantaPorId(id: string): Promise<Planta | undefined> {
+    return new Promise((resolve, reject) => {
+      db.get('SELECT * FROM plantas WHERE id = ?', [id], (err: DbError | null, row: any) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(row as Planta | undefined);
+      });
+    });
+  }
+
+  /**
+   * Busca todas as plantas
+   * @returns Promise com array de plantas
+   */
+  static buscarTodasPlantas(): Promise<Planta[]> {
+    return new Promise((resolve, reject) => {
+      db.all('SELECT * FROM plantas', (err: DbError | null, rows: any) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(rows as Planta[]);
+      });
+    });
+  }
+
+  /**
+   * Adiciona uma nova planta ao banco de dados
+   * @param planta Dados da planta a ser adicionada
+   * @returns Promise com a planta adicionada incluindo seu ID
+   */
+  static criarPlanta(planta: PlantaInput): Promise<Planta> {
     return new Promise((resolve, reject) => {
       const {
-        tipo_planta_id,
         nome,
         subtitulo,
         etiquetas,
@@ -33,23 +94,42 @@ export class PlantaModel {
         porcentagem_desconto,
         caracteristicas,
         descricao,
-        url_imagem
+        url_imagem,
+        tipo_planta_id
       } = planta;
 
       db.run(
           `INSERT INTO plantas (
-            tipo_planta_id, nome, subtitulo, etiquetas, preco,
-            esta_em_promocao, porcentagem_desconto,
-            caracteristicas, descricao, url_imagem
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          nome, subtitulo, etiquetas, preco,
+          esta_em_promocao, porcentagem_desconto,
+          caracteristicas, descricao, url_imagem, tipo_planta_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            tipo_planta_id, nome, subtitulo, etiquetas, preco,
-            esta_em_promocao || false, porcentagem_desconto || null,
-            caracteristicas, descricao, url_imagem
+            nome,
+            subtitulo,
+            etiquetas,
+            preco,
+            esta_em_promocao || false,
+            porcentagem_desconto || null,
+            caracteristicas,
+            descricao,
+            url_imagem,
+            tipo_planta_id
           ],
-          function (err) {
-            if (err) reject(err);
-            resolve({ ...planta, id: this.lastID });
+          function(this: { lastID: number }, err: DbError | null) {
+            if (err) {
+              reject(err);
+              return;
+            }
+
+            // Get the inserted plant to return
+            db.get('SELECT * FROM plantas WHERE id = ?', [this.lastID], (err: DbError | null, row: any) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(row as Planta);
+            });
           }
       );
     });
@@ -59,39 +139,21 @@ export class PlantaModel {
    * Busca todos os tipos de plantas
    * @returns Promise com array de tipos de plantas
    */
-  static buscarTiposPlantas(): Promise<any[]> {
+  static buscarTiposPlantas(): Promise<TipoPlanta[]> {
     return new Promise((resolve, reject) => {
-      db.all('SELECT * FROM tipos_planta', (err, rows) => {
-        if (err) reject(err);
-        resolve(rows);
-      });
-    });
-  }
-
-  /**
-   * Busca todas as plantas
-   * @returns Promise com array de plantas
-   */
-  static buscarTodasPlantas(): Promise<any[]> {
-    return new Promise((resolve, reject) => {
-      db.all('SELECT * FROM plantas', (err, rows) => {
-        if (err) reject(err);
-        resolve(rows);
-      });
-    });
-  }
-
-  /**
-   * Busca uma planta pelo ID
-   * @param id ID da planta a ser buscada
-   * @returns Promise com os dados da planta ou undefined se não encontrada
-   */
-  static buscarPlantaPorId(id: number): Promise<any> {
-    return new Promise((resolve, reject) => {
-      db.get('SELECT * FROM plantas WHERE id = ?', [id], (err, row) => {
-        if (err) reject(err);
-        resolve(row);
+      db.all('SELECT * FROM tipos_planta', (err: DbError | null, rows: any) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(rows as TipoPlanta[]);
       });
     });
   }
 }
+
+// For backward compatibility with previous code
+export const getPlantaByIdFromDB = PlantaModel.buscarPlantaPorId;
+export const getAllPlantasFromDB = PlantaModel.buscarTodasPlantas;
+export const addPlantaToDB = PlantaModel.criarPlanta;
+export const getTiposPlantaFromDB = PlantaModel.buscarTiposPlantas;

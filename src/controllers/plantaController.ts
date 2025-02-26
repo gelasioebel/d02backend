@@ -1,80 +1,73 @@
-// Controlador para operações com plantas
-import { Request, Response } from 'express';
+// src/controllers/plantaController.ts
+import { Request, Response, NextFunction } from 'express';
 import { PlantaModel } from '../models/plantaModel';
-import { validationMiddleware } from '../middlewares/validationMiddleware';
 
 /**
- * Busca todas as plantas
+ * Get all plants
  */
-export const getPlantas = async (req: Request, res: Response) => {
+export const getPlantas = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
     try {
         const plantas = await PlantaModel.buscarTodasPlantas();
-        res.status(200).json(plantas);
-    } catch (err: any) {
-        console.error('Erro ao buscar plantas:', err);
-        res.status(500).json({ message: 'Erro ao buscar plantas', error: err.message });
+        res.json(plantas);
+    } catch (error) {
+        next(error);
     }
 };
 
 /**
- * Busca uma planta específica pelo ID
+ * Get plant by ID
  */
-export const getPlantaById = async (req: Request, res: Response) => {
+export const getPlantaById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
     try {
-        const id = parseInt(req.params.id);
-        if (isNaN(id)) {
-            return res.status(400).json({ message: 'ID inválido' });
-        }
-
+        const { id } = req.params;
         const planta = await PlantaModel.buscarPlantaPorId(id);
         if (!planta) {
-            return res.status(404).json({ message: 'Planta não encontrada' });
+            res.status(404).json({ error: 'Planta not found' });
+            return;
         }
-
-        res.status(200).json(planta);
-    } catch (err: any) {
-        console.error('Erro ao buscar planta:', err);
-        res.status(500).json({ message: 'Erro ao buscar planta', error: err.message });
+        res.json(planta);
+    } catch (error) {
+        next(error);
     }
 };
 
 /**
- * Busca todos os tipos de plantas
+ * Add a new plant
  */
-export const getTiposPlanta = async (req: Request, res: Response) => {
+export const addPlanta = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
     try {
-        const tipos = await PlantaModel.buscarTiposPlantas();
-        res.status(200).json(tipos);
-    } catch (err: any) {
-        console.error('Erro ao buscar tipos de plantas:', err);
-        res.status(500).json({ message: 'Erro ao buscar tipos de plantas', error: err.message });
-    }
-};
-
-/**
- * Adiciona uma nova planta
- */
-export const addPlanta = async (req: Request, res: Response) => {
-    try {
-        // Validação dos dados de entrada
-        const validationResult = await validationMiddleware(req.body);
-
-        if (validationResult.error) {
-            return res.status(400).json({
-                message: 'Dados inválidos',
-                errors: validationResult.error
-            });
-        }
-
         const plantaData = req.body;
-        const planta = await PlantaModel.criarPlanta(plantaData);
+        const newPlanta = await PlantaModel.criarPlanta(plantaData);
+        res.status(201).json(newPlanta);
+    } catch (error) {
+        next(error);
+    }
+};
 
-        res.status(201).json({
-            message: 'Planta adicionada com sucesso!',
-            planta
-        });
-    } catch (err: any) {
-        console.error('Erro ao adicionar planta:', err);
-        res.status(500).json({ message: 'Erro ao adicionar planta', error: err.message });
+/**
+ * Get all plant types
+ */
+export const getTiposPlanta = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const tiposPlanta = await PlantaModel.buscarTiposPlantas();
+        res.json(tiposPlanta);
+    } catch (error) {
+        next(error);
     }
 };
